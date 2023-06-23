@@ -1,14 +1,13 @@
 use std::time::Instant;
 use linreg::{linear_regression as linear_r};
 
-#[derive(Clone)]
-#[napi(object)]
-pub struct OHLC {
-  pub  open: f64,
-  pub  high: f64,
-  pub  low: f64,
-  pub  close: f64
-}
+
+use crate::structures::OHLC;
+use crate::structures::MACD;
+use crate::structures::BollingerBands;
+use crate::structures::KDJ;
+use crate::structures::KC;
+use crate::structures::TTM;
 
 #[napi]
 pub fn sma(series: Vec<f64>, period: i32) -> Vec<f64> {
@@ -46,14 +45,6 @@ pub fn ema(mut series: Vec<f64>, period: i32) -> Vec<f64> {
     results.reverse();
     return results;
 }
-
-
-#[napi(object)]
-pub struct MACD {
-    pub line: f64,
-    pub signal: f64,
-    pub histogram: f64
- }
 
 #[napi]
 pub fn macd(series: Vec<f64>, fast_period: i32, slow_period: i32, smoothing: i32) -> Vec<MACD> {
@@ -117,17 +108,9 @@ pub fn sd(series: Vec<f64>, period:  i32, std: i32, mode: i32) -> Vec<f64> {
     return results;
 }
 
-#[napi(object)]
-pub struct BollingerBands {
-    pub upper: f64,
-    pub middle: f64,
-    pub lower: f64,
-    pub std: f64
- }
-
 #[napi]
 pub fn bollinger_bands(series: Vec<f64>, period: i32, std: i32, std_mode: i32) -> Vec<BollingerBands> {
-    let b = Instant::now();
+    // let b = Instant::now();
     let mut results = Vec::new();
     let middle = sma(series.clone(), period);
     let _sd = sd(series.clone(),period,std,std_mode);
@@ -136,34 +119,28 @@ pub fn bollinger_bands(series: Vec<f64>, period: i32, std: i32, std_mode: i32) -
     for x in 0..count {
         results.push(BollingerBands { upper: middle[x] + _sd[x], middle: middle[x], lower: middle[x] - _sd[x], std: _sd[x] });
     }
-    println!("BB Elapsed time: {:.2?}", b.elapsed());
+    // println!("BB Elapsed time: {:.2?}", b.elapsed());
     return results;
 
 }
 
-#[napi(object)]
-pub struct KDJ {
-  pub  k: f64,
-  pub  d: f64,
-  pub  j: f64
-}
-
 #[napi]
-// pub fn kdj(mut lows: Vec<f64>, mut highs: Vec<f64>,mut closes: Vec<f64>, period: i32, k_signal: i32, d_signal: i32) -> Vec<KDJ> {
-pub fn kdj(mut series: Vec<OHLC>, period: i32, k_signal: i32, d_signal: i32) -> Vec<KDJ> {
-    series.reverse();
-    let mut lows = Vec::new();
-    let mut highs =  Vec::new();
-    let mut closes = Vec::new();
+// pub fn kdj(mut series: Vec<OHLC>, period: i32, k_signal: i32, d_signal: i32) -> Vec<KDJ> {
+pub fn kdj(mut highs: Vec<f64>, mut lows: Vec<f64>, mut closes: Vec<f64>, period: i32, k_signal: i32, d_signal: i32) -> Vec<KDJ> {
+    highs.reverse();
+    lows.reverse();
+    closes.reverse();
 
-    for x in series {
-      lows.push(x.low);
-      highs.push(x.high);
-      closes.push(x.close);
-    }
-    // lows.reverse();
-    // highs.reverse();
-    // closes.reverse();
+    // series.reverse();
+    // let mut lows = Vec::new();
+    // let mut highs =  Vec::new();
+    // let mut closes = Vec::new();
+
+    // for x in series {
+    //   lows.push(x.low);
+    //   highs.push(x.high);
+    //   closes.push(x.close);
+    // }
 
     let mut results = Vec::<KDJ>::new();
     let mut rsv = Vec::new();
@@ -243,7 +220,7 @@ pub fn kdj(mut series: Vec<OHLC>, period: i32, k_signal: i32, d_signal: i32) -> 
 }
 
 #[napi]
-pub fn tr(lows: Vec<f64>,highs: Vec<f64>,closes: Vec<f64>) -> Vec<f64> {
+pub fn tr(highs: Vec<f64>, lows: Vec<f64>, closes: Vec<f64>) -> Vec<f64> {
     let mut results = Vec::new();
 
     for x in 0..highs.len() {
@@ -267,23 +244,16 @@ pub fn tr(lows: Vec<f64>,highs: Vec<f64>,closes: Vec<f64>) -> Vec<f64> {
 }
 
 #[napi]
-pub fn atr(lows: Vec<f64>,highs: Vec<f64>,closes: Vec<f64>,period: i32) -> Vec<f64> {
-    let _tr = tr(lows,highs,closes);
+pub fn atr(highs: Vec<f64>, lows: Vec<f64>, closes: Vec<f64>, period: i32) -> Vec<f64> {
+    let _tr = tr(highs,lows,closes);
     let results = ema(_tr,period);
     return results;
 }
 
-#[napi(object)]
-pub struct KC {
-  pub upper: f64,
-  pub middle: f64,
-  pub lower: f64
-}
-
 #[napi]
-pub fn kc(lows: Vec<f64>,highs: Vec<f64>,closes: Vec<f64>,period: i32) -> Vec<KC> {
+pub fn kc(highs: Vec<f64>, lows: Vec<f64>, closes: Vec<f64>, period: i32) -> Vec<KC> {
     let _ema = ema(closes.clone(),period);
-    let _atr = atr(lows,highs,closes,period);
+    let _atr = atr(highs,lows,closes,period);
     let mut results = Vec::new();
 
     for x in 0.._atr.len() {
@@ -373,7 +343,7 @@ pub fn linear_regression(series: Vec<f64>, period: i32) -> Vec<f64> {
 }
 
 #[napi]
-pub fn mean(lows: Vec<f64>,highs: Vec<f64>,closes: Vec<f64>,period:  i32) -> Vec<f64> {
+pub fn mean(highs: Vec<f64>, lows: Vec<f64>, closes: Vec<f64>,period:  i32) -> Vec<f64> {
     let _high = highest(highs, period);
     let _low = lowest(lows, period);
     let _sma = sma(closes.clone(), period);
@@ -388,17 +358,11 @@ pub fn mean(lows: Vec<f64>,highs: Vec<f64>,closes: Vec<f64>,period:  i32) -> Vec
     return results;
 }
 
-#[napi(object)]
-pub struct TTM {
-    pub histogram: f64,
-    pub squeeze_on: bool
- }
-
 #[napi]
-pub fn ttm_squeeze(lows: Vec<f64>, highs: Vec<f64>, closes: Vec<f64>, period: i32) -> Vec<TTM> {
+pub fn ttm_squeeze(highs: Vec<f64>, lows: Vec<f64>, closes: Vec<f64>, period: i32) -> Vec<TTM> {
     let _bb = bollinger_bands(closes.clone(), period, 2, 1);
-    let _kc = kc(lows.clone(),highs.clone(),closes.clone(),period);
-    let _midline = mean(lows.clone(),highs.clone(),closes.clone(),period);
+    let _kc = kc(highs.clone(),lows.clone(),closes.clone(),period);
+    let _midline = mean(highs.clone(),lows.clone(),closes.clone(),period);
     // println!("{:?} {:?} {:?}", _midline.len(), _bb.len(), _kc.len());
     let _lr = linear_regression(_midline, period);
     // println!("{:?}", _lr.len());

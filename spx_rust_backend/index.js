@@ -252,7 +252,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { sma, ema, macd, sd, bollingerBands, kdj, tr, atr, kc, donchianMidline, highest, lowest, linearRegression, mean, ttmSqueeze, testRun } = nativeBinding
+const { sma, ema, macd, sd, bollingerBands, kdj, tr, atr, kc, donchianMidline, highest, lowest, linearRegression, mean, ttmSqueeze, testRun, getPrices, getEntries } = nativeBinding
 
 module.exports.sma = sma
 module.exports.ema = ema
@@ -270,3 +270,5 @@ module.exports.linearRegression = linearRegression
 module.exports.mean = mean
 module.exports.ttmSqueeze = ttmSqueeze
 module.exports.testRun = testRun
+module.exports.getPrices = getPrices
+module.exports.getEntries = getEntries
