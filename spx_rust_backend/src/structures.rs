@@ -1,7 +1,5 @@
 // Historical Prices Struct
 
-use futures::stream::StreamFuture;
-
 #[derive(Clone,Debug)]
 #[napi(object)]
 pub struct OHLC {
@@ -13,7 +11,7 @@ pub struct OHLC {
 
 //Indicators Struct
 
-#[derive(Clone,Debug)]
+#[derive(Clone,Debug,Copy)]
 #[napi(object)]
 pub struct MACD {
     pub line: f64,
@@ -21,7 +19,7 @@ pub struct MACD {
     pub histogram: f64
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone,Debug,Copy)]
 #[napi(object)]
 pub struct BollingerBands {
     pub upper: f64,
@@ -30,7 +28,7 @@ pub struct BollingerBands {
     pub std: f64
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone,Debug,Copy)]
 #[napi(object)]
 pub struct KDJ {
     pub  k: f64,
@@ -38,7 +36,7 @@ pub struct KDJ {
     pub  j: f64
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone,Debug,Copy)]
 #[napi(object)]
 pub struct KC {
   pub upper: f64,
@@ -46,7 +44,7 @@ pub struct KC {
   pub lower: f64
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone,Debug,Copy)]
 #[napi(object)]
 pub struct TTM {
     pub histogram: f64,

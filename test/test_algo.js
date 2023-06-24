@@ -83,6 +83,7 @@ const run = async () => {
     },
     priceFrom: 2.0,
     priceTo: 52.0,
+    // dateFrom: '2023-01-01',
     dateFrom: '2023-01-01',
     dateTo: '2023-05-31',
     // dateTo: '2023-05-31',

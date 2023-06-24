@@ -67,7 +67,7 @@ pub fn get_prices(tickers: Vec<i32>) -> Vec<OHLC> {
 }
 
 
-pub fn get_options_prices_query(from: String, to: String, symbol: String) ->Result<Vec<OptionOHLC>, Box<dyn std::error::Error>> {
+pub fn get_options_prices_query(from: String, to: String, symbol: String) ->Result<Vec<OptionOHLC>, Box<dyn std::error::Error + Send + Sync>> {
   let mut client = Client::connect(
     "postgresql://postgres:0Y6PP3rwir@104.167.197.64:5432/pros",
       NoTls,

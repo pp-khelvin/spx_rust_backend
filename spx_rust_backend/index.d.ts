@@ -18,9 +18,9 @@ export function lowest(series: Array<number>, period: number): Array<number>
 export function linearRegression(series: Array<number>, period: number): Array<number>
 export function mean(highs: Array<number>, lows: Array<number>, closes: Array<number>, period: number): Array<number>
 export function ttmSqueeze(highs: Array<number>, lows: Array<number>, closes: Array<number>, period: number): Array<TTM>
-export function testRun(series: Array<OHLC>, w: number): void
+export function testRun(series: Array<OHLC>, w: number): Promise<void>
 export function getPrices(tickers: Array<number>): Array<OHLC>
-export function getEntries(params: Parameters): number
+export function getEntries(params: Parameters): Promise<number>
 export interface Ohlc {
   open: number
   high: number

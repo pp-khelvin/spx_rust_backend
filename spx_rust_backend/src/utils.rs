@@ -2,8 +2,11 @@
 // mod indicators;
 
 use napi_derive::napi;
-use std::time::Instant;
 use std::thread;
+use std::time::Instant;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+use tokio::runtime;
 
 use crate::sma;
 use crate::ema;
@@ -24,11 +27,19 @@ use crate::ttm_squeeze;
 use crate::structures::OHLC;
 
 #[napi] 
-pub fn test_run(series: Vec<OHLC>, w: i32) {
+pub async fn test_run(series: Vec<OHLC>, w: i32) {
+    // let rt = runtime::Builder::new_multi_thread()
+    //     // .worker_threads(8)
+    //     .thread_name_fn(|| {
+    //         static ATOMIC_ID: AtomicUsize = AtomicUsize::new(0);
+    //         let id = ATOMIC_ID.fetch_add(1, Ordering::SeqCst);
+    //         format!("my-pool-{}", id)
+    //      })
+    //     .build()
+    //     .unwrap();
 
     let b = Instant::now();
 
-    let c_series = series.clone();
     let mut open = Vec::new();
     let mut high = Vec::new();
     let mut low = Vec::new();
@@ -42,12 +53,12 @@ pub fn test_run(series: Vec<OHLC>, w: i32) {
     }
 
     let mut handles = vec![];
-    for _y in 1..w {
-        let c_series1 = c_series.clone();
+    for _y in 0..w {
         let high1 = high.clone();
         let low1 = low.clone();
         let close1 = close.clone();
-        let handle = thread::spawn( move || {
+       let handle = tokio::spawn(async move {
+            let a = Instant::now();
             sma(close1.clone(),20);
             ema(close1.clone(),20);
             macd(close1.clone(),26,12,9);
@@ -63,13 +74,21 @@ pub fn test_run(series: Vec<OHLC>, w: i32) {
             linear_regression(close1.clone(),20);
             mean(high1.clone(),low1.clone(),close1.clone(),20);
             ttm_squeeze(high1.clone(),low1.clone(),close1.clone(),20);
+
+            println!("{_y} Thread {} Elapsed time: {:.2?}", thread::current().name().unwrap(), a.elapsed());
+            return 1
         });
         handles.push(handle)
     }
 
-    for handle in handles {
-        handle.join().unwrap();
-    }
+    let ha = futures::future::join_all(handles).await;
+    // drop(rt);
+    println!("{:?}", ha);
+    // for handle in handles {
+    //     let m = tokio::join!(handle);
+    //     println!("{:?}", m);
+    // }
+    
     
     
     println!("Object Elapsed time: {:.2?}", b.elapsed());

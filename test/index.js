@@ -387,12 +387,12 @@ const Test = async () => {
   //   return TestRust();
   // }))
 
-  // testRun(sData, 100)
+  testRun(await sData, 100)
   // console.log(testDb())
-  console.log(getPrices([ 913354362, 913243251,
-    913344317, 913348845,
-    913349000, 913349155,
-    913349310, 913344262]))
+  // console.log(getPrices([ 913354362, 913243251,
+  //   913344317, 913348845,
+  //   913349000, 913349155,
+  //   913349310, 913344262]))
   console.timeEnd(`RUST ${t.length}X`)
 
     // console.log(TestJS())
