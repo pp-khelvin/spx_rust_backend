@@ -3,18 +3,25 @@ use std::collections::HashMap;
 // use serde::{Serialize, Deserialize};
 // use serde_json::json;
 
-use postgres::{Client, NoTls, Error};
+// use postgres::{Client, NoTls, Error};
+use tokio_postgres::{NoTls, Error};
 
 // use crate::Ticker;
 use crate::structures::DbOHLC as OHLC;
 use crate::structures::DbOptionOHLC as OptionOHLC;
 // use crate::HpGroup as HP;
 
-pub fn get_prices_query(tickers: Vec<i32>) ->Result<Vec<OHLC>, Box<dyn std::error::Error>> {
-  let mut client = Client::connect(
-    "postgresql://postgres:Pioneers1@127.0.0.1/trading",
+pub async fn get_prices_query(tickers: Vec<i32>) ->Result<Vec<OHLC>, Box<dyn std::error::Error>> {
+  let (client, connection) = tokio_postgres::connect(
+    "postgresql://postgres:postgres@127.0.0.1/trading",
       NoTls,
-  )?;
+  ).await?;
+
+  tokio::spawn(async move {
+    if let Err(e) = connection.await {
+        eprintln!("connection error: {}", e);
+    }
+  });
 
   let mut result = Vec::new();
 
@@ -25,8 +32,8 @@ pub fn get_prices_query(tickers: Vec<i32>) ->Result<Vec<OHLC>, Box<dyn std::erro
     ids.push_str(&t);
   }
 
-  let query = format!("SELECT \"tickerId\" as ticker, timeframe, d, open, high, low, close, volume from historical_prices where \"tickerId\" in ({})",&ids);
-  for row in client.query(&query, &[])? {
+  let query = format!("SELECT \"tickerId\" as ticker, timeframe, d, open, high, low, close, volume from historical_prices where \"tickerId\" in ({}) and close is not null",&ids);
+  for row in client.query(&query, &[]).await? {
     let price = OHLC { 
       ticker: row.get(0), 
       timeframe: row.get(1),
@@ -38,14 +45,14 @@ pub fn get_prices_query(tickers: Vec<i32>) ->Result<Vec<OHLC>, Box<dyn std::erro
       volume: row.get(7)
     };
     result.push(price);
-    }
+}
 
   Ok(result)
 }
 
 #[napi]
-pub fn get_prices(tickers: Vec<i32>) -> Vec<OHLC> {
-  let res = get_prices_query(tickers);
+pub async fn get_prices(tickers: Vec<i32>) -> Vec<OHLC> {
+  let res = get_prices_query(tickers).await;
   let mut result = vec![];
   let _r = match res {
     Ok(v) => result = v,
@@ -67,32 +74,44 @@ pub fn get_prices(tickers: Vec<i32>) -> Vec<OHLC> {
 }
 
 
-pub fn get_options_prices_query(from: String, to: String, symbol: String) ->Result<Vec<OptionOHLC>, Box<dyn std::error::Error + Send + Sync>> {
-  let mut client = Client::connect(
+pub async fn get_options_prices_query(from: String, to: String, symbol: String, timeframes: String) ->Result<Vec<OptionOHLC>, Box<dyn std::error::Error + Send + Sync>> {
+  // println!("DB1");
+  let (client, connection) = tokio_postgres::connect(
     "postgresql://postgres:0Y6PP3rwir@104.167.197.64:5432/pros",
-      NoTls,
-  )?;
-
+    NoTls,
+  ).await?;
+  // println!("DB2");
+  
+  tokio::spawn(async move {
+    if let Err(e) = connection.await {
+      eprintln!("connection error: {}", e);
+    }
+  });
+  // println!("DB3");
+  
+  
   let mut result: Vec<OptionOHLC> = vec![];
   let query = format!("SELECT 
-      TICKERS_OPTION_CONTRACT_ID,
-      TIMEFRAME,
-      D,
-      OPEN,
-      HIGH,
-      LOW,
-      CLOSE,
-      VOLUME
-    FROM OPTIONS_HISTORICAL_PRICES_WEBULL
-    WHERE TICKERS_OPTION_CONTRACT_ID in
-        (SELECT ID
-          FROM TICKERS_OPTION_CONTRACTS
-          WHERE EXPIRE_DATE >= '{from}'
-            AND EXPIRE_DATE <= '{to}'
-            AND UNDERLYING_TICKER = '{symbol}')
+  TICKERS_OPTION_CONTRACT_ID,
+  TIMEFRAME,
+  D,
+  OPEN,
+  HIGH,
+  LOW,
+  CLOSE,
+  VOLUME
+  FROM OPTIONS_HISTORICAL_PRICES_WEBULL
+  WHERE TICKERS_OPTION_CONTRACT_ID in
+  (SELECT ID
+    FROM TICKERS_OPTION_CONTRACTS
+    WHERE EXPIRE_DATE >= '{from}'
+    AND EXPIRE_DATE <= '{to}'
+    AND UNDERLYING_TICKER = '{symbol}')
+  AND TIMEFRAME IN ({timeframes})
     ORDER BY D DESC;");
-
-  for row in client.query(&query, &[])? {
+    
+    // println!("{}", query);
+  for row in client.query(&query, &[]).await? {
     let price = OptionOHLC { 
       tickers_option_contract_id: row.get(0), 
       timeframe: row.get(1),
@@ -104,7 +123,8 @@ pub fn get_options_prices_query(from: String, to: String, symbol: String) ->Resu
       volume: row.get(7),
     };
     result.push(price);
-    }
+  }
 
+  // println!("{:?}", result);
   Ok(result)
 }

@@ -64,7 +64,7 @@ pub struct DbOHLC {
     pub high: f64,
     pub low: f64,
     pub close: f64,
-    pub volume: f64
+    pub volume: Option<f64>
 }
 
 #[derive(Clone,Debug)]
@@ -77,7 +77,7 @@ pub struct DbOptionOHLC {
     pub high: f64,
     pub low: f64,
     pub close: f64,
-    pub volume: f64
+    pub volume: Option<f64>
 }
 
 #[derive(Clone,Debug)]
@@ -135,7 +135,8 @@ pub struct Parameters {
     pub date_from: String,
     pub date_to: String,
     pub symbol: String,
-    pub futures: bool
+    pub futures: bool,
+    pub timeframes: String
 }
 
 #[derive(Clone,Debug)]
