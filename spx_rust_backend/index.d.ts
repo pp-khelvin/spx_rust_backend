@@ -19,7 +19,7 @@ export function linearRegression(series: Array<number>, period: number): Array<n
 export function mean(highs: Array<number>, lows: Array<number>, closes: Array<number>, period: number): Array<number>
 export function ttmSqueeze(highs: Array<number>, lows: Array<number>, closes: Array<number>, period: number): Array<TTM>
 export function testRun(series: Array<OHLC>, w: number): Promise<void>
-export function getPrices(tickers: Array<number>): Array<OHLC>
+export function getPrices(tickers: Array<number>): Promise<Array<OHLC>>
 export function getEntries(params: Parameters): Promise<number>
 export interface Ohlc {
   open: number
@@ -60,7 +60,7 @@ export interface DbOhlc {
   high: number
   low: number
   close: number
-  volume: number
+  volume?: number
 }
 export interface DbOptionOhlc {
   tickersOptionContractId: number
@@ -70,7 +70,7 @@ export interface DbOptionOhlc {
   high: number
   low: number
   close: number
-  volume: number
+  volume?: number
 }
 export interface Ticker {
   ticker: number
@@ -113,6 +113,7 @@ export interface Parameters {
   dateTo: string
   symbol: string
   futures: boolean
+  timeframes: string
 }
 export interface Indicators {
   macd?: Macd
