@@ -65,6 +65,8 @@ export interface DbOhlc {
 export interface DbOptionOhlc {
   tickersOptionContractId: number
   timeframe: string
+  expireDate: string
+  date: string
   d: number
   open: number
   high: number
@@ -116,6 +118,9 @@ export interface Parameters {
   timeframes: string
 }
 export interface Indicators {
+  tickersOptionContractId?: number
+  d?: number
+  timeframe?: string
   macd?: Macd
   kdj?: Kdj
   bollinger?: BollingerBands

@@ -72,6 +72,8 @@ pub struct DbOHLC {
 pub struct DbOptionOHLC {
     pub tickers_option_contract_id: i32,
     pub timeframe: String,
+    pub expire_date: String,
+    pub date: String,
     pub d: i32,
     pub open: f64,
     pub high: f64,
@@ -142,6 +144,9 @@ pub struct Parameters {
 #[derive(Clone,Debug)]
 #[napi(object)]
 pub struct Indicators {
+    pub tickers_option_contract_id: Option<i32>,
+    pub d: Option<i32>,
+    pub timeframe: Option<String>,
     pub macd: Option<MACD>,
     pub kdj: Option<KDJ>,
     pub bollinger: Option<BollingerBands>,

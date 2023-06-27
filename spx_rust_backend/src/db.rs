@@ -74,7 +74,7 @@ pub async fn get_prices(tickers: Vec<i32>) -> Vec<OHLC> {
 }
 
 
-pub async fn get_options_prices_query(from: String, to: String, symbol: String, timeframes: String) ->Result<Vec<OptionOHLC>, Box<dyn std::error::Error + Send + Sync>> {
+pub async fn get_options_prices_query(from: String, to: String, symbol: String) ->Result<Vec<OptionOHLC>, Box<dyn std::error::Error + Send + Sync>> {
   // println!("DB1");
   let (client, connection) = tokio_postgres::connect(
     "postgresql://postgres:0Y6PP3rwir@104.167.197.64:5432/pros",
@@ -94,20 +94,22 @@ pub async fn get_options_prices_query(from: String, to: String, symbol: String, 
   let query = format!("SELECT 
   TICKERS_OPTION_CONTRACT_ID,
   TIMEFRAME,
+  EXPIRE_DATE::TEXT,
+  DATE::TEXT,
   D,
   OPEN,
   HIGH,
   LOW,
   CLOSE,
   VOLUME
-  FROM OPTIONS_HISTORICAL_PRICES_WEBULL
+  FROM OPTIONS_HISTORICAL_PRICES_WEBULL HP
+  LEFT JOIN TICKERS_OPTION_CONTRACTS TK ON HP.TICKERS_OPTION_CONTRACT_ID = TK.ID
   WHERE TICKERS_OPTION_CONTRACT_ID in
   (SELECT ID
     FROM TICKERS_OPTION_CONTRACTS
     WHERE EXPIRE_DATE >= '{from}'
     AND EXPIRE_DATE <= '{to}'
     AND UNDERLYING_TICKER = '{symbol}')
-  AND TIMEFRAME IN ({timeframes})
     ORDER BY D DESC;");
     
     // println!("{}", query);
@@ -115,12 +117,14 @@ pub async fn get_options_prices_query(from: String, to: String, symbol: String, 
     let price = OptionOHLC { 
       tickers_option_contract_id: row.get(0), 
       timeframe: row.get(1),
-      d: row.get(2),
-      open: row.get(3),
-      high: row.get(4),
-      low: row.get(5),
-      close: row.get(6),
-      volume: row.get(7),
+      expire_date: row.get(2),
+      date: row.get(3),
+      d: row.get(4),
+      open: row.get(5),
+      high: row.get(6),
+      low: row.get(7),
+      close: row.get(8),
+      volume: row.get(9),
     };
     result.push(price);
   }

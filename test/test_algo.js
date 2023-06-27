@@ -85,7 +85,7 @@ const run = async () => {
     priceTo: 52.0,
     // dateFrom: '2023-01-01',
     dateFrom: '2023-05-01',
-    dateTo: '2023-05-31',
+    dateTo: '2023-05-05',
     // dateTo: '2023-05-31',
     timeframes: `'m1','m2','m3','m5','m10','m15'`,
     futures: false,
